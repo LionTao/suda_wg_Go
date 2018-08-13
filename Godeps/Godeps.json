@@ -1,0 +1,30 @@
+{
+  "ImportPath": "suda_wg_Go",
+  "GoVersion": "go1.10",
+  "GodepVersion": "v80",
+  "Deps": [
+    {
+      "ImportPath": "github.com/PuerkitoBio/goquery",
+      "Comment": "v1.4.1",
+      "Rev": "dc2ec5c7ca4d9aae063b79b9f581dd3ea6afd2b2"
+    },
+    {
+      "ImportPath": "github.com/andybalholm/cascadia",
+      "Comment": "v1.0.0",
+      "Rev": "901648c87902174f774fac311d7f176f8647bdaa"
+    },
+    {
+      "ImportPath": "github.com/urfave/cli",
+      "Comment": "v1.20.0-73-g8e01ec4",
+      "Rev": "8e01ec4cd3e2d84ab2fe90d8210528ffbb06d8ff"
+    },
+    {
+      "ImportPath": "golang.org/x/net/html",
+      "Rev": "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+    },
+    {
+      "ImportPath": "golang.org/x/net/html/atom",
+      "Rev": "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+    }
+  ]
+}
