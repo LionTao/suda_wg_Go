@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 )
 
@@ -50,7 +51,7 @@ func main() {
 		if NetWorkStatus() {
 			fmt.Println("Login success")
 		} else {
-			fmt.Println("Oops! Somthing was wrong")
+			fmt.Println("[WARNING] Connection test Failed")
 		}
 	}
 
@@ -135,14 +136,20 @@ func wg_login(EVENTVALIDATION string, VIEWSTATE string, username string, passwor
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil || resp.StatusCode != 200 {
 		fmt.Println(resp.StatusCode)
-		log.Fatal("[ERROR] login has no response")
+		fmt.Println(err)
+		log.Fatal("[ERROR] An error occurred in sending request")
 
 	}
 
 }
 
 func NetWorkStatus() bool {
-	cmd := exec.Command("ping", "baidu.com", "-c", "1", "-W", "5")
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("ping", "baidu.com", "-n", "1", "-w", "5")
+	} else {
+		cmd = exec.Command("ping", "baidu.com", "-c", "1", "-W", "5")
+	}
 	//fmt.Println("NetWorkStatus Start:", time.Now().Unix())
 	err := cmd.Run()
 	//fmt.Println("NetWorkStatus End  :", time.Now().Unix())
