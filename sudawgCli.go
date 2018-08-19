@@ -82,6 +82,10 @@ func main() {
 			Aliases: []string{"l"},
 			Flags: []cli.Flag{
 				cli.StringFlag{
+					Name:  "file,f",
+					Usage: "Path to config file",
+				},
+				cli.StringFlag{
 					Name:  "username,u",
 					Value: "",
 					Usage: "Your username for login",
@@ -160,9 +164,10 @@ func getAccount(ctx *cli.Context) (user account) {
 			fp       *os.File
 			fcontent []byte
 		)
-		if fp, err = os.Open("./test.toml"); err != nil {
+		if fp, err = os.Open(ctx.String("file")); err != nil {
 			fmt.Println("open error ", err)
 		}
+		fmt.Println("Using " + ctx.String("file"))
 
 		if fcontent, err = ioutil.ReadAll(fp); err != nil {
 			fmt.Println("ReadAll error ", err)
