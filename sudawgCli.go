@@ -6,8 +6,20 @@ import (
 	"os"
 	"time"
 
+	"io/ioutil"
+
+	"github.com/BurntSushi/toml"
 	"github.com/urfave/cli"
 )
+
+//type tomlConfig struct {
+//	user account
+//}
+
+type account struct {
+	Username string
+	Password string
+}
 
 func main() {
 	// Create Cli app
@@ -40,6 +52,10 @@ func main() {
 			Name:    "login",
 			Aliases: []string{"l"},
 			Flags: []cli.Flag{
+				cli.StringFlag{
+					Name:  "file,f",
+					Usage: "Path to config file",
+				},
 				cli.StringFlag{
 					Name:  "username,u",
 					Value: "",
@@ -106,33 +122,78 @@ func logout(ctx *cli.Context) {
 	wifiLogout()
 	time.Sleep(2)
 	if NetWorkStatus() {
-		username, passsword := getAccount(ctx)
-		wgLogout(username, passsword)
+		user := getAccount(ctx)
+		wgLogout(user)
 	}
 	log.Println("Offine now")
 }
 
 // Master func of login
 func login(ctx *cli.Context) {
-	username, password := getAccount(ctx)
+	var user account
+	user = getAccount(ctx)
 
 	// default portal is wg
 	if ctx.String("portal") == "wifi" {
 		//change portal to sudawifi if specified
 		log.Println("Logging into sudawifi")
-		wifiLogin(username, password)
+		wifiLogin(user)
 	} else {
 		log.Println("Logging into sudawg")
-		wgLogin(username, password)
+		wgLogin(user)
 	}
 
 	// Connection test
 	if NetWorkStatus() {
-		fmt.Println()
-		fmt.Println("===============================")
-		fmt.Println("Congratulations! Login success")
-		fmt.Println("===============================")
+		fmt.Println("[SUCCESS] Login success")
 	} else {
 		fmt.Println("[WARNING] Connection test Failed")
 	}
+}
+
+// Utility func for acquiring user account
+func getAccount(ctx *cli.Context) (user account) {
+	var err error
+	if ctx.String("file") != "" {
+		//var config tomlConfig
+		var (
+			fp       *os.File
+			fcontent []byte
+		)
+		if fp, err = os.Open("./test.toml"); err != nil {
+			fmt.Println("open error ", err)
+		}
+
+		if fcontent, err = ioutil.ReadAll(fp); err != nil {
+			fmt.Println("ReadAll error ", err)
+		}
+
+		//temp := new(account)
+		if _, err = toml.Decode(string(fcontent), &user); err != nil {
+			fmt.Println("toml.Unmarshal error ", err)
+		}
+		return user
+	}
+	if ctx.String("username") != "" {
+		user.Username = ctx.String("username")
+	} else {
+		fmt.Print("Username:")
+		_, err = fmt.Scanln(&user.Username)
+		for err != nil {
+			fmt.Print("Username:")
+			_, err = fmt.Scanln(&user.Username)
+		}
+	}
+
+	if ctx.String("password") != "" {
+		user.Password = ctx.String("password")
+	} else {
+		fmt.Print("Password:")
+		_, err = fmt.Scanln(&user.Password)
+		for err != nil {
+			fmt.Print("Password:")
+			_, err = fmt.Scanln(&user.Password)
+		}
+	}
+	return user
 }

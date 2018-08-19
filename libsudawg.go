@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strings"
@@ -9,21 +8,8 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// Logout func for wg.suda.edu.cn
-func wgLogout(username string, password string) {
-	ev, vs := getWgParam()
-	wgPost(ev, vs, username, password, "退出网关")
-}
-
-// Login func for wg.suda.edu.cn
-func wgLogin(username string, password string) {
-
-	ev, vs := getWgParam()
-	wgPost(ev, vs, username, password, "登陆网关")
-}
-
 // Utility func to get auxiliary param for api interaction
-func getWgParam() (eventvalidation, viewstate string) {
+func getWgParam() (eventvalidation, viewstate string, cookie string) {
 	url := "http://wg.suda.edu.cn/indexn.aspx"
 	res, err := http.Get(url)
 	if err != nil {
@@ -34,30 +20,31 @@ func getWgParam() (eventvalidation, viewstate string) {
 		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
 	}
 
+	cookie = strings.Split(res.Header["Set-Cookie"][0], ";")[0]
+
 	// Load the HTML document
 	doc, err := goquery.NewDocumentFromReader(res.Body)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	var VIEWSTATE, EVENTVALIDATION string
 	doc.Find("input").Each(func(i int, s *goquery.Selection) {
 		// Get viewstate and eventvalidation for interacting with wg.suda.edu.cn
 		name, _ := s.Attr("name")
 		if name != "" {
 			if name == "__VIEWSTATE" {
-				VIEWSTATE, _ = s.Attr("value")
+				viewstate, _ = s.Attr("value")
 			} else if name == "__EVENTVALIDATION" {
-				EVENTVALIDATION, _ = s.Attr("value")
+				eventvalidation, _ = s.Attr("value")
 			}
 		}
 	})
 
-	return EVENTVALIDATION, VIEWSTATE
+	return eventvalidation, viewstate, cookie
 }
 
 // Utility func to send post form with necessary param to wg.suda.edu.cn
-func wgPost(EVENTVALIDATION string, VIEWSTATE string, username string, password string, action string) {
+func wgPost(EVENTVALIDATION string, VIEWSTATE string, user account, action string, cookie string) {
 	if EVENTVALIDATION == "" || VIEWSTATE == "" {
 		log.Fatal("Oh no! no param was given")
 	}
@@ -73,8 +60,8 @@ func wgPost(EVENTVALIDATION string, VIEWSTATE string, username string, password 
 	r.Form.Add("__EVENTARGUMENT=", "")
 	r.Form.Add("__VIEWSTATE", VIEWSTATE)
 	r.Form.Add("__EVENTVALIDATION", EVENTVALIDATION)
-	r.Form.Add("TextBox1", username)
-	r.Form.Add("TextBox2", password)
+	r.Form.Add("TextBox1", user.Username)
+	r.Form.Add("TextBox2", user.Password)
 	r.Form.Add("nw", "RadioButton2")
 	r.Form.Add("tm", "RadioButton8")
 	// Unique action for login or logout
@@ -94,12 +81,52 @@ func wgPost(EVENTVALIDATION string, VIEWSTATE string, username string, password 
 	}
 	request.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	request.Header.Set("Connection", "Keep-Alive")
+	request.Header.Set("Cookie", cookie)
+	request.Header.Set("Upgrade-Insecure-Requests", "1")
+	request.Header.Set("User-Agent", "Mozilla/5.0 (X11; Fedora; Linux x86_64; rv:61.0) Gecko/20100101 Firefox/61.0")
 
-	resp, err := http.DefaultClient.Do(request)
+	//fmt.Println(username)
+	//fmt.Println(password)
+	var resp *http.Response
+	resp, err = http.DefaultClient.Do(request)
+	//
 	if err != nil || resp.StatusCode != 200 {
-		fmt.Println(resp.StatusCode)
-		fmt.Println(err)
+		//var body []byte
+		//fmt.Println(resp.StatusCode)
+		//fmt.Println(err)
+		//body, err = ioutil.ReadAll(resp.Body)
+		//if err != nil {
+		//	log.Fatal("ohno")
+		//}
+		////fmt.Println(string(body))
+		//err = ioutil.WriteFile("./error.html", body, 0644)
+		//if err != nil {
+		//
+		//}
 		log.Fatal("[ERROR] An error occurred in sending request")
 	}
+	//body, err = ioutil.ReadAll(resp.Body)
+	//if err != nil {
+	//
+	//}
+	//err = ioutil.WriteFile("./res.html", body, 0644)
+	//if err != nil {
+	//
+	//}
+	////fmt.Println(string(body))
 
+}
+
+// Login func for wg.suda.edu.cn
+func wgLogin(user account) {
+	var ev, vs, cookie string
+
+	ev, vs, cookie = getWgParam()
+	wgPost(ev, vs, user, "登陆网关", cookie)
+}
+
+// Logout func for wg.suda.edu.cn
+func wgLogout(user account) {
+	ev, vs, cookie := getWgParam()
+	wgPost(ev, vs, user, "退出网关", cookie)
 }

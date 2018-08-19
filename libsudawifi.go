@@ -9,7 +9,7 @@ import (
 )
 
 // Login func for a.suda.edu.cn
-func wifiLogin(username string, password string) {
+func wifiLogin(user account) {
 	url := "http://a.suda.edu.cn/index.php/index/login"
 
 	var r http.Request
@@ -17,8 +17,8 @@ func wifiLogin(username string, password string) {
 	if err != nil {
 		log.Fatal("[ERROR] POST Form parsing failed")
 	}
-	r.Form.Add("username", username)
-	r.Form.Add("password", base64.StdEncoding.EncodeToString([]byte(password)))
+	r.Form.Add("username", user.Username)
+	r.Form.Add("password", base64.StdEncoding.EncodeToString([]byte(user.Password)))
 
 	bodystr := strings.TrimSpace(r.Form.Encode())
 	request, err := http.NewRequest("POST", url, strings.NewReader(bodystr))
