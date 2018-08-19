@@ -26,6 +26,7 @@ func main() {
 	app := cli.NewApp()
 	app.Name = "sudawg-agent"
 	app.Usage = "Login Program for wg.suda.edu.cn"
+	app.Version = "v0.3"
 
 	// Global options for login without login command
 	app.Flags = []cli.Flag{
